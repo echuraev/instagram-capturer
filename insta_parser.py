@@ -14,6 +14,7 @@ PAGES = {
     'infiniti_usa': 'https://www.instagram.com/infinitiusa/',
     'audi': 'https://www.instagram.com/audi/',
 }
+PARSE_COMMENTS = False
 
 class InstaParser:
     def __init__(self):
@@ -86,6 +87,7 @@ class InstaParser:
         posts = []
         break_loop = False
         till_datetime = datetime.strptime(till_str, '%H:%M:%S %d.%m.%Y')
+        i = 0
 
         while True:
             if break_loop is True:
@@ -103,7 +105,10 @@ class InstaParser:
                 if post['taken_at_timestamp'] < till_datetime.timestamp():
                     break_loop = True
                     break
-                post['all_comments'] = self.__get_all_comments(post['shortcode'])
+                if PARSE_COMMENTS is True:
+                    post['all_comments'] = self.__get_all_comments(post['shortcode'])
+                print('Done post: {0}'.format(i))
+                i += 1
                 posts.append(post)
                 #posts.append(post_data)
 
@@ -121,6 +126,7 @@ if __name__ == '__main__':
     insta = InstaParser()
     data = {}
     for name, url in PAGES.items():
+        print('Start parsing {0}'.format(name))
         posts = insta.parse(url)
         data[name] = posts
         print('Got {0} posts for {1}'.format(len(posts), name))
