@@ -22,12 +22,16 @@ class InstaParser:
         pass
 
     def __sleep(self):
-        pass
-        #time.sleep(random.randint(0, 2)) # insure to not reach a time limit
+        time.sleep(random.randint(1, 2)) # insure to not reach a time limit
 
     def __get_json_url(self, page_id, first, after):
         url = 'https://www.instagram.com/graphql/query/?query_hash=472f257a40c653c64c666ce877d59d2b&variables='
         variables = '{"id": "' + str(page_id) + '","first":' + str(first) + ',"after":"' + str(after) + '"}'
+        return url + variables
+
+    def __get_json_comments_url(self, shortcode, first, after):
+        url = 'https://www.instagram.com/graphql/query/?query_hash=33ba35852cb50da46f5b5e889df7d159&variables='
+        variables = '{"shortcode": "' + str(shortcode) + '","first":' + str(first) + ',"after":"' + str(after) + '"}'
         return url + variables
 
     def __get_post_json_url(self, post):
@@ -40,7 +44,7 @@ class InstaParser:
         self.__sleep()
         return data['logging_page_id'].split('_')[1]
 
-    def __get_page_info(self, page_id, first = 120, after = ""):
+    def __get_page_info(self, page_id, first = 100, after = ""):
         r = requests.get(self.__get_json_url(page_id, first, after))
         data = json.loads(r.text)
         if data["status"] != "ok":
@@ -53,6 +57,28 @@ class InstaParser:
         data = json.loads(r.text)
         self.__sleep()
         return data['graphql']['shortcode_media']
+
+    def __get_comments(self, shortcode, first = 100, after = ""):
+        r = requests.get(self.__get_json_comments_url(shortcode, first, after))
+        data = json.loads(r.text)
+        if data["status"] != "ok":
+            raise Exception('Error! Cannot get information for page! shortcode = {0}, first = {1}, after = {2}'.format(shortcode, first, after))
+        self.__sleep()
+        return data["data"]["shortcode_media"]["edge_media_to_comment"]
+
+    def __get_all_comments(self, shortcode):
+        comments = []
+        end_cursor = ""
+        has_next_page = True
+
+        while has_next_page is True:
+            data = self.__get_comments(shortcode, after = end_cursor)
+            has_next_page = data['page_info']['has_next_page']
+            end_cursor = data['page_info']['end_cursor']
+            for c in data['edges']:
+                comments.append(c['node'])
+
+        return comments
 
     def parse(self, url, till_str='00:00:00 01.01.2020'):
         page_id = self.__get_page_id(url)
@@ -67,6 +93,9 @@ class InstaParser:
 
             data = self.__get_page_info(page_id, after = end_cursor)
             end_cursor = data['page_info']['end_cursor']
+            if data['page_info']['has_next_page'] is False:
+                break_loop = True
+
             for p in data['edges']:
                 post = p['node']
                 #post_data = self.__get_post_info(post)
@@ -74,6 +103,7 @@ class InstaParser:
                 if post['taken_at_timestamp'] < till_datetime.timestamp():
                     break_loop = True
                     break
+                post['all_comments'] = self.__get_all_comments(post['shortcode'])
                 posts.append(post)
                 #posts.append(post_data)
 
