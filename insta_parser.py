@@ -18,8 +18,6 @@ PARSE_COMMENTS = False
 
 class InstaParser:
     def __init__(self):
-        # Found here: https://stackoverflow.com/questions/49265339/instagram-a-1-url-not-working-anymore-problems-with-graphql-query-to-get-da/49341049#49341049
-        #self.json_url = 'https://www.instagram.com/graphql/query/?query_hash=472f257a40c653c64c666ce877d59d2b&variables={"id":"43109246","first":12,"after":""}'
         pass
 
     def __sleep(self):
