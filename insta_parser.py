@@ -5,6 +5,7 @@ from pathlib import Path
 from pathlib import PurePath
 
 import json
+import os
 import random
 import requests
 import time
@@ -15,6 +16,7 @@ PAGES = {
     'audi': 'https://www.instagram.com/audi/',
 }
 PARSE_COMMENTS = False
+RESULT_DIR = PurePath(os.path.dirname(os.path.abspath(__file__)), 'data_json')
 
 class InstaParser:
     def __init__(self):
@@ -128,5 +130,5 @@ if __name__ == '__main__':
         posts = insta.parse(url)
         data[name] = posts
         print('Got {0} posts for {1}'.format(len(posts), name))
-    insta.write_data('./data_json', data)
+    insta.write_data(RESULT_DIR, data)
 
