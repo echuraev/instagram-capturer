@@ -9,6 +9,8 @@ import os
 import xlsxwriter
 
 RESULT_DIR = PurePath(os.path.dirname(os.path.abspath(__file__)), 'data_json')
+TIME_LIST = []
+POST_ORDER = {}
 
 def transform_data(path):
     """transform result data from structure:
@@ -29,12 +31,17 @@ def transform_data(path):
     res_data = {}
     for dir_datetime in os.listdir(path):
         json_file = str(PurePath(path, dir_datetime, 'data.json'))
+        TIME_LIST.append(dir_datetime)
         with open(json_file, 'r') as f:
             data = json.load(f)
         for comp, posts in data.items():
             if comp not in res_data:
                 res_data[comp] = {}
+            if comp not in POST_ORDER:
+                POST_ORDER[comp] = []
             for post in posts:
+                if post['taken_at_timestamp'] not in POST_ORDER[comp]:
+                    POST_ORDER[comp].append(post['taken_at_timestamp'])
                 shortcode = post['shortcode']
                 collect_time = {
                         'time': dir_datetime,
@@ -58,6 +65,7 @@ def transform_data(path):
                     if collect_time not in res_data[comp][shortcode]['collect_time']:
                         res_data[comp][shortcode]['collect_time'].append(collect_time)
 
+    TIME_LIST.sort()
     return res_data
 
 def create_workbook(dir_name, prefix, data):
@@ -82,29 +90,30 @@ def create_workbook(dir_name, prefix, data):
             ws.write(i, 0, data_rows[i], bold)
 
         col = 1
+        order = POST_ORDER[comp_name]
+        order.sort()
         for shortcode in data[comp_name]:
             print(shortcode)
             pdata = data[comp_name][shortcode]
-            ws.merge_range(0, col, 0, col + 1, shortcode)
-            ws.merge_range(1, col, 1, col + 1, 'photo' if pdata['is_video'] is False else 'video')
-            ws.merge_range(2, col, 2, col + 1, datetime.fromtimestamp(pdata['publish_timestamp']).strftime('%d.%m.%Y %H:%M:%S'))
-            ws.merge_range(3, col, 3, col + 1, pdata['content_url'])
-            ws.merge_range(4, col, 4, col + 1, pdata['description'])
-            ws.merge_range(5, col, 5, col + 1, str(pdata['dimensions']['width']) + 'x' + str(pdata['dimensions']['height']))
-            ws.merge_range(6, col, 6, col + 1, 'False' if pdata['comments_disabled'] is False else 'True')
-            ws.write(7, col, 'Likes', bold)
-            ws.write(7, col + 1, 'Comments', bold)
+            col_ind = order.index(pdata['publish_timestamp']) * 2 + col
+            ws.merge_range(0, col_ind, 0, col_ind + 1, shortcode)
+            ws.merge_range(1, col_ind, 1, col_ind + 1, 'photo' if pdata['is_video'] is False else 'video')
+            ws.merge_range(2, col_ind, 2, col_ind + 1, datetime.fromtimestamp(pdata['publish_timestamp']).strftime('%d.%m.%Y %H:%M:%S'))
+            ws.merge_range(3, col_ind, 3, col_ind + 1, pdata['content_url'])
+            ws.merge_range(4, col_ind, 4, col_ind + 1, pdata['description'])
+            ws.merge_range(5, col_ind, 5, col_ind + 1, str(pdata['dimensions']['width']) + 'x' + str(pdata['dimensions']['height']))
+            ws.merge_range(6, col_ind, 6, col_ind + 1, 'False' if pdata['comments_disabled'] is False else 'True')
+            ws.write(7, col_ind, 'Likes', bold)
+            ws.write(7, col_ind + 1, 'Comments', bold)
 
             row = len(data_rows)
             for time in pdata['collect_time']:
                 print(time)
+                ind = TIME_LIST.index(time['time'])
                 t = datetime.strptime(time['time'], '%Y%m%d_%H%M%S').strftime('%d.%m.%Y %H:%M:%S')
-                ws.write(row, 0, t)
-                ws.write(row, col, time['likes_count'])
-                ws.write(row, col + 1, time['comments_count'])
-                row += 1
-
-            col += 2
+                ws.write(row + ind, 0, t)
+                ws.write(row + ind, col_ind, time['likes_count'])
+                ws.write(row + ind, col_ind + 1, time['comments_count'])
 
         workbook.close()
 
