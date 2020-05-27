@@ -80,6 +80,7 @@ def create_workbook(dir_name, prefix, data):
             'Short code:',
             'Type:',
             'Publish date:',
+            'Publish time:',
             'Url:',
             'Description:',
             'Dimension (WxH):',
@@ -98,13 +99,14 @@ def create_workbook(dir_name, prefix, data):
             col_ind = order.index(pdata['publish_timestamp']) * 2 + col
             ws.merge_range(0, col_ind, 0, col_ind + 1, shortcode)
             ws.merge_range(1, col_ind, 1, col_ind + 1, 'photo' if pdata['is_video'] is False else 'video')
-            ws.merge_range(2, col_ind, 2, col_ind + 1, datetime.fromtimestamp(pdata['publish_timestamp']).strftime('%d.%m.%Y %H:%M:%S'))
-            ws.merge_range(3, col_ind, 3, col_ind + 1, pdata['content_url'])
-            ws.merge_range(4, col_ind, 4, col_ind + 1, pdata['description'])
-            ws.merge_range(5, col_ind, 5, col_ind + 1, str(pdata['dimensions']['width']) + 'x' + str(pdata['dimensions']['height']))
-            ws.merge_range(6, col_ind, 6, col_ind + 1, 'False' if pdata['comments_disabled'] is False else 'True')
-            ws.write(7, col_ind, 'Likes', bold)
-            ws.write(7, col_ind + 1, 'Comments', bold)
+            ws.merge_range(2, col_ind, 2, col_ind + 1, datetime.fromtimestamp(pdata['publish_timestamp']).strftime('%d.%m.%Y'))
+            ws.merge_range(3, col_ind, 3, col_ind + 1, datetime.fromtimestamp(pdata['publish_timestamp']).strftime('%H:%M:%S'))
+            ws.merge_range(4, col_ind, 4, col_ind + 1, pdata['content_url'])
+            ws.merge_range(5, col_ind, 5, col_ind + 1, pdata['description'])
+            ws.merge_range(6, col_ind, 6, col_ind + 1, str(pdata['dimensions']['width']) + 'x' + str(pdata['dimensions']['height']))
+            ws.merge_range(7, col_ind, 7, col_ind + 1, 'False' if pdata['comments_disabled'] is False else 'True')
+            ws.write(8, col_ind, 'Likes', bold)
+            ws.write(8, col_ind + 1, 'Comments', bold)
 
             row = len(data_rows)
             for time in pdata['collect_time']:

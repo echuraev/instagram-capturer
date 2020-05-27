@@ -11,11 +11,29 @@ import requests
 import time
 
 PAGES = {
-    'bmw': 'https://www.instagram.com/bmw/',
-    'infiniti_usa': 'https://www.instagram.com/infinitiusa/',
-    'audi': 'https://www.instagram.com/audi/',
+    'GenesisWorld': 'https://www.instagram.com/genesisworldwide/',
+    'GenesisRussia': 'https://www.instagram.com/genesisrussia/',
+    'BMWWorld': 'https://www.instagram.com/bmw/',
+    'BMWRussia': 'https://www.instagram.com/bmwru/',
+    'MercedesWorld': 'https://www.instagram.com/mercedesbenz/',
+    'MercedesRussia': 'https://www.instagram.com/mbrussia/',
+    'AudiWorld': 'https://www.instagram.com/audiofficial/',
+    'AudiRussia': 'https://www.instagram.com/audirussia/',
+    'LexusWorld': 'https://www.instagram.com/lexususa/',
+    'LexusRussia': 'https://www.instagram.com/lexusrussia/',
+    'InfinitiWorld': 'https://www.instagram.com/infiniti/',
+    'InfinitiRussia': 'https://www.instagram.com/infiniti_russia/',
+    'PorscheWorld': 'https://www.instagram.com/porsche/',
+    'PorscheRussia': 'https://www.instagram.com/porsche_russia/',
+    'CadillacWorld': 'https://www.instagram.com/cadillac/',
+    'CadillacRussia': 'https://www.instagram.com/cadillacrussia/',
+    'JaguarWorld': 'https://www.instagram.com/jaguar/',
+    'JaguarRussia': 'https://www.instagram.com/jaguarrussia/',
+    'VolvoWorld': 'https://www.instagram.com/volvocars/',
+    'VolvoRussia': 'https://www.instagram.com/volvocarsrus/',
 }
-PARSE_COMMENTS = False
+PARSE_COMMENTS = True
+REPEAT_FAILS = True
 RESULT_DIR = PurePath(os.path.dirname(os.path.abspath(__file__)), 'data_json')
 
 class InstaParser:
@@ -73,7 +91,15 @@ class InstaParser:
         has_next_page = True
 
         while has_next_page is True:
-            data = self.__get_comments(shortcode, after = end_cursor)
+            while True:
+                try:
+                    data = self.__get_comments(shortcode, after = end_cursor)
+                    break
+                except:
+                    print("Repeat fails __get_comments")
+                    if REPEAT_FAILS is False:
+                        break;
+                    time.sleep(random.randint(180, 240))
             has_next_page = data['page_info']['has_next_page']
             end_cursor = data['page_info']['end_cursor']
             for c in data['edges']:
@@ -93,12 +119,21 @@ class InstaParser:
             if break_loop is True:
                 break
 
-            data = self.__get_page_info(page_id, after = end_cursor)
+            while True:
+                try:
+                    data = self.__get_page_info(page_id, after = end_cursor)
+                    break
+                except:
+                    if REPEAT_FAILS is False:
+                        break
+                    print("Repeat fails __get_page_info")
+                    time.sleep(random.randint(180, 240))
             end_cursor = data['page_info']['end_cursor']
             if data['page_info']['has_next_page'] is False:
                 break_loop = True
 
             for p in data['edges']:
+                print('Start post: {0}'.format(i))
                 post = p['node']
                 #post_data = self.__get_post_info(post)
                 #if post_data['taken_at_timestamp'] < till_datetime.timestamp():
